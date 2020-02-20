@@ -12,7 +12,7 @@ export class CdkTwitterStack extends cdk.Stack {
     constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
-        const accountId = '{ACCOUNT ID}';
+        const accountId = cdk.Stack.of(this).account;
         const region = cdk.Stack.of(this).region;
         const lambdaName = 'cdk-twitter-lambda';
         const dynamoTableName = 'cdk-twitter-dynamo';
