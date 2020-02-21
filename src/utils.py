@@ -13,7 +13,7 @@ auth.set_access_token(access_token, access_token_secret)
 
 api = tweepy.API(auth)
 
-search_string = '#search_string_here'
+search_string = '#thisyinhere'
 
 
 def reply_to_statuses():
