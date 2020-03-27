@@ -1,11 +1,24 @@
 # Twitter Video Bot Lambda
 ## Lambda which replies to video comments with the video URL, deployed via AWS Cloud Development Kit
 
+You will need a Twitter Developer account. Apply here:
+
+https://developer.twitter.com/en/apply-for-access
+
 The app will search for the search string defined in utils
 
 #### 1. Add your Twitter/AWS details
 The project pulls the api keys from AWS SSM param store, add these to the same path as outlined in the
-cdk-twitter-stack.ts param lookups
+cdk-twitter-stack.ts param lookups:
+
+
+Token - '/twitterlambda/accesstoken'
+
+Access token secret - '/twitterlambda/accesstokensecret'
+
+Consumer key - '/twitterlambda/consumerkey'
+
+Consumer key secret - '/twitterlambda/consumersecretkey'
 
 #### 2. Export your aws profile
 
@@ -30,4 +43,10 @@ $  cdk synth
 
 ```sh
 $  cdk deploy
+```
+
+#### 5. Destroy the stack:
+
+```sh
+$  cdk destroy
 ```

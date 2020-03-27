@@ -4,8 +4,9 @@ import lambda = require('@aws-cdk/aws-lambda');
 import ssm = require('@aws-cdk/aws-ssm');
 import iam = require('@aws-cdk/aws-iam');
 import dynamodb = require('@aws-cdk/aws-dynamodb');
-import * as cdk from '@aws-cdk/core';
 import path = require('path');
+import * as cdk from '@aws-cdk/core';
+import {RemovalPolicy} from '@aws-cdk/core';
 import {PolicyStatement} from "@aws-cdk/aws-iam";
 
 export class CdkTwitterStack extends cdk.Stack {
@@ -81,6 +82,7 @@ export class CdkTwitterStack extends cdk.Stack {
 
         new dynamodb.Table(this, dynamoTableName, {
             tableName: dynamoTableName,
+            removalPolicy: RemovalPolicy.DESTROY,
             partitionKey: {name: 'id', type: dynamodb.AttributeType.STRING},
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
         });
