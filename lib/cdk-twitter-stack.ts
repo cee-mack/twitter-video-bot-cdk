@@ -83,7 +83,7 @@ export class CdkTwitterStack extends cdk.Stack {
         new dynamodb.Table(this, dynamoTableName, {
             tableName: dynamoTableName,
             removalPolicy: RemovalPolicy.DESTROY,
-            partitionKey: {name: 'id', type: dynamodb.AttributeType.STRING},
+            partitionKey: {name: 'username', type: dynamodb.AttributeType.STRING},
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
         });
     }
