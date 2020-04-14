@@ -16,7 +16,7 @@ auth.set_access_token(access_token, access_token_secret)
 
 api = tweepy.API(auth)
 
-search_string = '#thisyinhere'
+search_string = '#search_string'
 
 
 def reply_to_statuses():
@@ -39,7 +39,7 @@ def reply_to_statuses():
             video_link = return_highest_bitrate(parent_tweet_id)
             api.update_status(construct_message(user_screen_name, username, video_link), tweet_id)
 
-            write_tweet(username, tweet_id)
+            write_tweet(user_screen_name, parent_tweet_id, video_link)
 
         tweet_ids.sort(reverse=True)
         write_latest_tweet_id(tweet_ids[0])
