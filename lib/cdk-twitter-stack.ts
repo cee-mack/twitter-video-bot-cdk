@@ -44,8 +44,8 @@ export class CdkTwitterStack extends cdk.Stack {
             resources: [`arn:aws:dynamodb:${region}:${accountId}:table/${dynamoTableName}`],
             actions: [
                 'dynamodb:PutItem',
-                'dynamodb:DeleteItem',
-                'dynamodb:Scan']
+                'dynamodb:UpdateItem',
+                'dynamodb:GetItem']
         }));
 
         twitterLambdaRole.addToPolicy(new PolicyStatement({
