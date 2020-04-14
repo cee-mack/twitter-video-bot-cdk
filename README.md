@@ -34,12 +34,17 @@ $ pip install -r src/requirements.txt -t src/dependencies
 $ npm install
 ```
 
-#### 4. Generate Cloudformation Template for stack:
+#### 4. Compile typescript
+```sh
+$  npm run watch
+```
+
+#### 3. Generate Cloudformation Template for stack:
 
 ```sh
 $  cdk synth
 ```
-#### 5. Deploy the stack:
+#### 3. Deploy the stack:
 
 ```sh
 $  cdk deploy
