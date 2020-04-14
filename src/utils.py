@@ -1,7 +1,10 @@
 import tweepy
 import os
 from dynamo_utils import *
+import logging
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 consumer_key = os.environ['CONSUMERKEY']
 consumer_secret = os.environ['CONSUMERSECRET']
@@ -19,7 +22,7 @@ search_string = '#search_string'
 def reply_to_statuses():
 
     tweet_ids = []
-    latest_id = int(get_latest_id())
+    latest_id = int(return_latest_tweet_id())
 
     search = api.search(search_string, tweet_mode='extended', since_id=latest_id)
 
@@ -36,11 +39,13 @@ def reply_to_statuses():
             video_link = return_highest_bitrate(parent_tweet_id)
             api.update_status(construct_message(user_screen_name, username, video_link), tweet_id)
 
+            write_tweet(user_screen_name, parent_tweet_id, video_link)
+
         tweet_ids.sort(reverse=True)
-        write_last_id(tweet_ids[0])
+        write_latest_tweet_id(tweet_ids[0])
 
     else:
-        print('Search was null')
+        logger.info('Search returned no results')
 
 
 def construct_message(user_screen_name, username, highest_quality_video):

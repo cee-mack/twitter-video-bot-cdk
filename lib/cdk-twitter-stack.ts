@@ -44,8 +44,8 @@ export class CdkTwitterStack extends cdk.Stack {
             resources: [`arn:aws:dynamodb:${region}:${accountId}:table/${dynamoTableName}`],
             actions: [
                 'dynamodb:PutItem',
-                'dynamodb:DeleteItem',
-                'dynamodb:Scan']
+                'dynamodb:UpdateItem',
+                'dynamodb:GetItem']
         }));
 
         twitterLambdaRole.addToPolicy(new PolicyStatement({
@@ -83,7 +83,7 @@ export class CdkTwitterStack extends cdk.Stack {
         new dynamodb.Table(this, dynamoTableName, {
             tableName: dynamoTableName,
             removalPolicy: RemovalPolicy.DESTROY,
-            partitionKey: {name: 'id', type: dynamodb.AttributeType.STRING},
+            partitionKey: {name: 'username', type: dynamodb.AttributeType.STRING},
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
         });
     }
