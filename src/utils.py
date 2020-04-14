@@ -26,7 +26,7 @@ def reply_to_statuses():
 
     search = api.search(search_string, tweet_mode='extended', since_id=latest_id)
 
-    if search != []:
+    if search:
 
         for result in search:
             tweet_id = result._json['id']
