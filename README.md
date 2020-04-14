@@ -7,7 +7,7 @@ https://developer.twitter.com/en/apply-for-access
 
 The app will search for the search string defined in utils
 
-#### 1. Add your Twitter/AWS details
+#### 1. Add your Twitter/AWS details:
 The project pulls the api keys from AWS SSM param store, add these to the same path as outlined in the
 cdk-twitter-stack.ts param lookups:
 
@@ -20,13 +20,13 @@ Consumer key - '/twitterlambda/consumerkey'
 
 Consumer key secret - '/twitterlambda/consumersecretkey'
 
-#### 2. Export your aws profile
+#### 2. Export your aws profile:
 
 ```sh
 $ export AWS_PROFILE=<aws profile>
 ```
 
-#### 3. Install Requirements/dependencies
+#### 3. Install Requirements/dependencies:
 The requirements need to be packaged within the project for AWS lambda. The following installs the packages in a 
 dependencies directory, and installs the node packages for CDK:
 ```sh
@@ -34,23 +34,23 @@ $ pip install -r src/requirements.txt -t src/dependencies
 $ npm install
 ```
 
-#### 4. Compile typescript
+#### 4. Compile typescript during development:
 ```sh
 $  npm run watch
 ```
 
-#### 3. Generate Cloudformation Template for stack:
+#### 5. Generate Cloudformation Template for stack:
 
 ```sh
 $  cdk synth
 ```
-#### 3. Deploy the stack:
+#### 6. Deploy the stack:
 
 ```sh
 $  cdk deploy
 ```
 
-#### 5. Destroy the stack:
+#### 7. Destroy the stack:
 
 ```sh
 $  cdk destroy
