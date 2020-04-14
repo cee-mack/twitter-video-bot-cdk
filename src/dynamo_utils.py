@@ -1,22 +1,25 @@
 import boto3
 import time
 import logging
+import os
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+region = os.environ['REGION']
+
 session = boto3.session.Session()
-dynamodb = session.resource('dynamodb', 'eu-west-1')
-table = dynamodb.Table('play')
+dynamodb = session.resource('dynamodb', region)
+table = dynamodb.Table('cdk-twitter-dynamo')
 
 
-def write_tweet(username, tweet_id):
+def write_tweet(username, tweet_id, video_link):
     user_document = get_document(username)
 
     if 'Item' in user_document:
-        update_user_document(username, tweet_id)
+        update_user_document(username, tweet_id, video_link)
     else:
-        put_new_user_document(username, tweet_id)
+        put_new_user_document(username, tweet_id, video_link)
 
 
 def return_latest_tweet_id():
@@ -48,7 +51,7 @@ def get_document(username):
     return document
 
 
-def update_user_document(username, tweet_id):
+def update_user_document(username, tweet_id, video_link):
     update = table.update_item(
         Key={
             'username': username
@@ -56,6 +59,7 @@ def update_user_document(username, tweet_id):
         UpdateExpression="SET tweet = list_append(tweet, :i)",
         ExpressionAttributeValues={
             ':i': [{'id': tweet_id,
+                    'url': video_link,
                     'created': int(time.time())
                     }],
         },
@@ -65,12 +69,13 @@ def update_user_document(username, tweet_id):
     return update
 
 
-def put_new_user_document(username, tweet_id):
+def put_new_user_document(username, tweet_id, video_link):
     put_id = table.put_item(
         Item={
             'username': username,
             'tweet': [
                 {'id': tweet_id,
+                 'url': video_link,
                  'created': int(time.time())
                  }
             ]
