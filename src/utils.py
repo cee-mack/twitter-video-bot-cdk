@@ -32,26 +32,22 @@ def reply_to_statuses():
             tweet_id = result._json['id']
             parent_tweet_id = result._json['in_reply_to_status_id']
             user_screen_name = result._json['user']['screen_name']
-            username = result._json['user']['name']
 
             tweet_ids.append(tweet_id)
 
             video_link = return_highest_bitrate(parent_tweet_id)
-            api.update_status(construct_message(user_screen_name, username, video_link), tweet_id)
+            api.update_status(construct_message(user_screen_name, video_link), tweet_id)
 
             write_tweet(user_screen_name, parent_tweet_id, video_link)
 
-        tweet_ids.sort(reverse=True)
-        write_latest_tweet_id(tweet_ids[0])
+        write_latest_tweet_id(max(tweet_ids))
 
     else:
         logger.info('Search returned no results')
 
 
-def construct_message(user_screen_name, username, highest_quality_video):
-    return '@{} Here ye go {}! {}'.format(
-        user_screen_name, username, highest_quality_video
-    )
+def construct_message(user_screen_name, video_link):
+    return f'@{user_screen_name} Beep beep boop I am a bot! {video_link}'
 
 
 def return_highest_bitrate(parent_tweet_id):
