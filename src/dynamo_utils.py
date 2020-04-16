@@ -13,7 +13,7 @@ dynamodb = session.resource('dynamodb', region)
 table = dynamodb.Table('cdk-twitter-dynamo')
 
 
-def write_tweet(username, tweet_id, video_link):
+def write_tweet_to_db(username, tweet_id, video_link):
     user_document = get_document(username)
 
     if 'Item' in user_document:
