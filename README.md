@@ -5,12 +5,11 @@ You will need a Twitter Developer account. Apply here:
 
 https://developer.twitter.com/en/apply-for-access
 
-The app will search for the search string defined in utils
+The app will search for the string set in param store below.
 
-#### 1. Add your Twitter/AWS details:
-The project pulls the api keys from AWS SSM param store, add these to the same path as outlined in the
-cdk-twitter-stack.ts param lookups:
+#### 1. Set up parameters (api keys and search string):
 
+Search String - '/twitterlambda/searchstring'
 
 Token - '/twitterlambda/accesstoken'
 
