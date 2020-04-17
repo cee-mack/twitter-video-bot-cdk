@@ -35,6 +35,10 @@ export class CdkTwitterStack extends cdk.Stack {
             parameterName: '/twitterlambda/consumersecretkey',
         }).stringValue;
 
+        const searchString = ssm.StringParameter.fromStringParameterAttributes(this, 'searchString', {
+            parameterName: '/twitterlambda/searchstring',
+        }).stringValue;
+
 
         const twitterLambdaRole = new iam.Role(this, 'twitterLambdaRole', {
             assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
@@ -68,6 +72,7 @@ export class CdkTwitterStack extends cdk.Stack {
                 'CONSUMERSECRET': consumerSecret,
                 'ACCESSTOKEN': accessToken,
                 'ACCESSTOKENSECRET': accessTokenSecret,
+                'SEARCHSTRING': searchString,
                 'REGION': region,
                 'PYTHONPATH': pythonPath
             }
