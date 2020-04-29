@@ -6,11 +6,11 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-consumer_key = os.environ['CONSUMERKEY']
-consumer_secret = os.environ['CONSUMERSECRET']
-access_token = os.environ['ACCESSTOKEN']
-access_token_secret = os.environ['ACCESSTOKENSECRET']
-search_string = os.environ['SEARCHSTRING']
+consumer_key = os.getenv('CONSUMERKEY')
+consumer_secret = os.getenv('CONSUMERSECRET')
+access_token = os.getenv('ACCESSTOKEN')
+access_token_secret = os.getenv('ACCESSTOKENSECRET')
+search_string = os.getenv('SEARCHSTRING')
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
