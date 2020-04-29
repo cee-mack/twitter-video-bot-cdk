@@ -62,7 +62,7 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const twitterLambdaFunction = new lambda.Function(this, lambdaName, {
             functionName: lambdaName,
-            code: lambda.Code.fromAsset(path.join(__dirname, '../src')),
+            code: lambda.Code.fromAsset(path.join(__dirname, '../app/src')),
             role: twitterLambdaRole,
             handler: 'main.handler',
             runtime: lambda.Runtime.PYTHON_3_8,

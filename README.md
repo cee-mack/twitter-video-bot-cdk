@@ -7,7 +7,7 @@ https://developer.twitter.com/en/apply-for-access
 
 The app will search for the string set in param store below.
 
-#### 1. Set up parameters (api keys and search string):
+#### 1. Set up parameters in SSM param store (api keys and search string):
 
 Search String - '/twitterlambda/searchstring'
 
@@ -29,7 +29,7 @@ $ export AWS_PROFILE=<aws profile>
 The requirements need to be packaged within the project for AWS lambda. The following installs the packages in a 
 dependencies directory, and installs the node packages for CDK:
 ```sh
-$ pip install -r src/requirements.txt -t src/dependencies
+$ pip install -r app/requirements/base.txt -t app/src/dependencies
 $ npm install
 ```
 
