@@ -6,7 +6,7 @@ import os
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-region = os.environ['REGION']
+region = os.getenv('REGION')
 
 session = boto3.session.Session()
 dynamodb = session.resource('dynamodb', region)
