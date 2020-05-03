@@ -31,8 +31,9 @@ def reply_to_statuses():
             user_screen_name = result._json['user']['screen_name']
 
             tweet_ids.append(tweet_id)
+            parent_tweet_data = api.get_status(parent_tweet_id, tweet_mode='extended')
 
-            video_link = return_highest_bitrate(parent_tweet_id)
+            video_link = return_highest_bitrate(parent_tweet_data)
             api.update_status(construct_message(user_screen_name, video_link), tweet_id)
 
             if video_link:
@@ -53,11 +54,9 @@ def construct_message(user_screen_name, video_link):
         return f'@{user_screen_name} Sorry! No video was found :('
 
 
-def return_highest_bitrate(parent_tweet_id):
+def return_highest_bitrate(parent_tweet_data):
     def get_video_bitrate(video):
         return video['bitrate']
-
-    parent_tweet_data = api.get_status(parent_tweet_id, tweet_mode='extended')
 
     try:
         parent_video_url = parent_tweet_data._json['extended_entities']['media'][0]['video_info']['variants']
