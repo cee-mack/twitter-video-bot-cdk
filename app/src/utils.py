@@ -33,7 +33,7 @@ def reply_to_statuses():
             tweet_ids.append(tweet_id)
             parent_tweet_data = api.get_status(parent_tweet_id, tweet_mode='extended')
 
-            video_link = return_highest_bitrate(parent_tweet_data)
+            video_link = return_highest_bitrate(parent_tweet_data._json)
             api.update_status(construct_message(user_screen_name, video_link), tweet_id)
 
             if video_link:
@@ -59,7 +59,7 @@ def return_highest_bitrate(parent_tweet_data):
         return video['bitrate']
 
     try:
-        parent_video_url = parent_tweet_data._json['extended_entities']['media'][0]['video_info']['variants']
+        parent_video_url = parent_tweet_data['extended_entities']['media'][0]['video_info']['variants']
         mp4_videos = [video for video in parent_video_url if video['content_type'] == 'video/mp4']
         highest_bitrate_video = max(mp4_videos, key=get_video_bitrate)
         return highest_bitrate_video['url']
