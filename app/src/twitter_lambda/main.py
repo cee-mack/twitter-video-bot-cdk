@@ -1,7 +1,9 @@
 import tweepy
+import boto3
 import os
-from dynamo_utils import *
 import logging
+import json
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -11,41 +13,58 @@ consumer_secret = os.getenv('CONSUMERSECRET')
 access_token = os.getenv('ACCESSTOKEN')
 access_token_secret = os.getenv('ACCESSTOKENSECRET')
 search_string = os.getenv('SEARCHSTRING')
+twitter_account_name = os.getenv('TWITTERACCOUNTNAME')
+account_id = os.getenv('ACCOUNTID')
+region = os.getenv('REGION')
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
-
 api = tweepy.API(auth)
+
+client = boto3.client('lambda')
+
+def handler(event, context):
+    reply_to_statuses()
 
 
 class Tweet:
     def __init__(self, result):
         self.result = result
+        self.video_link = None
         self.tweet_id = self.result._json['id']
         self.parent_tweet_id = self.result._json['in_reply_to_status_id']
         self.user_screen_name = self.result._json['user']['screen_name']
 
+    def set_video_link(self, link):
+        self.video_link = link
+
+    def asdict(self):
+        return {
+            "tweet_id": self.tweet_id,
+            "username": self.user_screen_name,
+            "video_link": self.video_link
+        }
 
 def reply_to_statuses():
-    tweet_ids = []
-    latest_id = int(return_latest_tweet_id())
+
+    get_latest_id = api.get_user(twitter_account_name)
+    latest_id = get_latest_id._json['status']['id'] - 1
 
     search = api.search(search_string, tweet_mode='extended', since_id=latest_id)
+
+    logger.info(f'Search {search}')
 
     if search:
         for result in search:
             tweet = Tweet(result)
-            tweet_ids.append(tweet.tweet_id)
             parent_tweet_data = api.get_status(tweet.parent_tweet_id, tweet_mode='extended')
-            video_link = return_highest_bitrate(parent_tweet_data._json)
-            api.update_status(construct_message(tweet.user_screen_name, video_link), tweet.tweet_id)
+            tweet.set_video_link(return_highest_bitrate(parent_tweet_data._json))
+            api.update_status(construct_message(tweet.user_screen_name, tweet.video_link), tweet.tweet_id)
 
-            if video_link:
-                write_tweet_to_db(tweet.user_screen_name, tweet.parent_tweet_id, video_link)
+            if tweet.video_link:
+                invoke_dynamo_lambda(tweet.asdict())
             else:
                 logger.info(f'No video was found under comment for tweet ID {tweet.tweet_id}')
-
-        write_latest_tweet_id(max(tweet_ids))
 
     else:
         logger.info('Search returned no results')
@@ -70,3 +89,13 @@ def return_highest_bitrate(parent_tweet_data):
 
     except KeyError:
         return None
+
+def invoke_dynamo_lambda(tweet_data):
+    response = client.invoke(
+    FunctionName=f'arn:aws:lambda:{region}:{account_id}:function:cdk-dynamo-lambda',
+    InvocationType='RequestResponse',
+    LogType='None',
+    Payload=json.dumps(tweet_data),
+    )
+
+    logger.info(f'Invoked dynamo lambda with response: {response}')

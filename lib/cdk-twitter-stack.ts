@@ -15,7 +15,8 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const accountId = cdk.Stack.of(this).account;
         const region = cdk.Stack.of(this).region;
-        const lambdaName = 'cdk-twitter-lambda';
+        const twitterLambdaName = 'cdk-twitter-lambda';
+        const dynamoLambdaName = 'cdk-dynamo-lambda';
         const dynamoTableName = 'cdk-twitter-dynamo';
         const pythonPath = '/var/task/dependencies:/var/runtime';
 
@@ -39,18 +40,18 @@ export class CdkTwitterStack extends cdk.Stack {
             parameterName: '/twitterlambda/searchstring',
         }).stringValue;
 
+        const twitterAccountName = ssm.StringParameter.fromStringParameterAttributes(this, 'twitterAccountName', {
+            parameterName: '/twitterlambda/twitteraccountname',
+        }).stringValue;
+
 
         const twitterLambdaRole = new iam.Role(this, 'twitterLambdaRole', {
             assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
         });
 
-        twitterLambdaRole.addToPolicy(new PolicyStatement({
-            resources: [`arn:aws:dynamodb:${region}:${accountId}:table/${dynamoTableName}`],
-            actions: [
-                'dynamodb:PutItem',
-                'dynamodb:UpdateItem',
-                'dynamodb:GetItem']
-        }));
+        const dynamoLambdaRole = new iam.Role(this, 'dynamoLambdaRole', {
+            assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
+        });
 
         twitterLambdaRole.addToPolicy(new PolicyStatement({
             resources: ['*'],
@@ -60,11 +61,34 @@ export class CdkTwitterStack extends cdk.Stack {
                 'logs:PutLogEvents']
         }));
 
-        const twitterLambdaFunction = new lambda.Function(this, lambdaName, {
-            functionName: lambdaName,
+        twitterLambdaRole.addToPolicy(new PolicyStatement({
+            resources: [`arn:aws:lambda:${region}:${accountId}:function:${dynamoLambdaName}`],
+            actions: [
+                'lambda:InvokeFunction']
+        }));
+
+        dynamoLambdaRole.addToPolicy(new PolicyStatement({
+            resources: [`arn:aws:dynamodb:${region}:${accountId}:table/${dynamoTableName}`],
+            actions: [
+                'dynamodb:PutItem',
+                'dynamodb:UpdateItem',
+                'dynamodb:DeleteItem',
+                'dynamodb:GetItem']
+        }));
+
+        dynamoLambdaRole.addToPolicy(new PolicyStatement({
+            resources: ['*'],
+            actions: [
+                'logs:CreateLogGroup',
+                'logs:CreateLogStream',
+                'logs:PutLogEvents']
+        }));
+
+        const twitterLambdaFunction = new lambda.Function(this, twitterLambdaName, {
+            functionName: twitterLambdaName,
             code: lambda.Code.fromAsset(path.join(__dirname, '../app/src')),
             role: twitterLambdaRole,
-            handler: 'main.handler',
+            handler: 'twitter_lambda.main.handler',
             runtime: lambda.Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -74,16 +98,30 @@ export class CdkTwitterStack extends cdk.Stack {
                 'ACCESSTOKENSECRET': accessTokenSecret,
                 'SEARCHSTRING': searchString,
                 'REGION': region,
+                'TWITTERACCOUNTNAME': twitterAccountName,
+                'ACCOUNTID': accountId,
                 'PYTHONPATH': pythonPath
             }
         });
 
+        const dynamoLambdaFunction = new lambda.Function(this, dynamoLambdaName, {
+            functionName: dynamoLambdaName,
+            code: lambda.Code.fromAsset(path.join(__dirname, '../app/src')),
+            role: dynamoLambdaRole,
+            handler: 'dynamo_lambda.main.handler',
+            runtime: lambda.Runtime.PYTHON_3_8,
+            timeout: cdk.Duration.seconds(10),
+            environment: {
+                'REGION': region,
+                'PYTHONPATH': pythonPath
+            }
+        });
 
-        const rule = new events.Rule(this, 'Rule', {
+        const twitterLambdaRule = new events.Rule(this, 'twitterLambdaRule', {
             schedule: events.Schedule.expression('cron(0/1 * * * ? *)')
         });
 
-        rule.addTarget(new targets.LambdaFunction(twitterLambdaFunction));
+        twitterLambdaRule.addTarget(new targets.LambdaFunction(twitterLambdaFunction));
 
         new dynamodb.Table(this, dynamoTableName, {
             tableName: dynamoTableName,

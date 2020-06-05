@@ -13,6 +13,16 @@ dynamodb = session.resource('dynamodb', region)
 table = dynamodb.Table('cdk-twitter-dynamo')
 
 
+def handler(event, context):
+    if event:
+        username = event['username']
+        tweet_id = event['tweet_id']
+        video_link = event['video_link']
+
+        write_tweet_to_db(username, tweet_id, video_link)
+
+    print(event)
+
 def write_tweet_to_db(username, tweet_id, video_link):
     user_document = get_document(username)
 
@@ -20,26 +30,6 @@ def write_tweet_to_db(username, tweet_id, video_link):
         update_user_document(username, tweet_id, video_link)
     else:
         put_new_user_document(username, tweet_id, video_link)
-
-
-def return_latest_tweet_id():
-    latest = get_document('latest_tweet_id')
-    return latest['Item']['id']
-
-
-def write_latest_tweet_id(latest_tweet_id):
-    update = table.update_item(
-        Key={
-            'username': 'latest_tweet_id'
-        },
-        UpdateExpression="SET id = :i",
-        ExpressionAttributeValues={
-            ':i': latest_tweet_id,
-        },
-        ReturnValues="UPDATED_NEW"
-    )
-
-    return update
 
 
 def get_document(username):
@@ -75,9 +65,9 @@ def put_new_user_document(username, tweet_id, video_link):
             'username': username,
             'tweet': [
                 {'id': tweet_id,
-                 'url': video_link,
-                 'created': int(time.time())
-                 }
+                'url': video_link,
+                'created': int(time.time())
+                }
             ]
         }
     )
