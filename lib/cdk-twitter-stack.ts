@@ -132,7 +132,8 @@ export class CdkTwitterStack extends cdk.Stack {
             tableName: dynamoTableName,
             removalPolicy: RemovalPolicy.DESTROY,
             partitionKey: {name: 'username', type: dynamodb.AttributeType.STRING},
-            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+            timeToLiveAttribute: 'expiry'
         });
     }
 }
