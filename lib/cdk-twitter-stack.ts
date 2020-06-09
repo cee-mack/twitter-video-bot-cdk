@@ -44,6 +44,10 @@ export class CdkTwitterStack extends cdk.Stack {
             parameterName: '/twitterlambda/twitteraccountname',
         }).stringValue;
 
+        const expiration = ssm.StringParameter.fromStringParameterAttributes(this, 'expiration', {
+            parameterName: '/twitterlambda/expiration',
+        }).stringValue;
+
 
         const twitterLambdaRole = new iam.Role(this, 'twitterLambdaRole', {
             assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
@@ -113,6 +117,7 @@ export class CdkTwitterStack extends cdk.Stack {
             timeout: cdk.Duration.seconds(10),
             environment: {
                 'REGION': region,
+                'EXPIRATION': expiration,
                 'PYTHONPATH': pythonPath
             }
         });
@@ -127,7 +132,8 @@ export class CdkTwitterStack extends cdk.Stack {
             tableName: dynamoTableName,
             removalPolicy: RemovalPolicy.DESTROY,
             partitionKey: {name: 'username', type: dynamodb.AttributeType.STRING},
-            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+            timeToLiveAttribute: 'expiry'
         });
     }
 }
