@@ -1,6 +1,7 @@
 import events = require('@aws-cdk/aws-events');
 import targets = require('@aws-cdk/aws-events-targets');
 import lambda = require('@aws-cdk/aws-lambda');
+import { AwsIntegration, Cors, RestApi } from '@aws-cdk/aws-apigateway';
 import ssm = require('@aws-cdk/aws-ssm');
 import iam = require('@aws-cdk/aws-iam');
 import dynamodb = require('@aws-cdk/aws-dynamodb');
@@ -18,6 +19,7 @@ export class CdkTwitterStack extends cdk.Stack {
         const twitterLambdaName = 'cdk-twitter-lambda';
         const dynamoLambdaName = 'cdk-dynamo-lambda';
         const dynamoTableName = 'cdk-twitter-dynamo';
+        const apiName = 'TwitterAppApi';
         const pythonPath = '/var/task/dependencies:/var/runtime';
 
         const accessToken = ssm.StringParameter.fromStringParameterAttributes(this, 'accessToken', {
@@ -53,6 +55,10 @@ export class CdkTwitterStack extends cdk.Stack {
             assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
         });
 
+        const apiRole = new iam.Role(this, 'apiRole', {
+            assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com')
+        });
+
         const dynamoLambdaRole = new iam.Role(this, 'dynamoLambdaRole', {
             assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
         });
@@ -86,6 +92,12 @@ export class CdkTwitterStack extends cdk.Stack {
                 'logs:CreateLogGroup',
                 'logs:CreateLogStream',
                 'logs:PutLogEvents']
+        }));
+
+        apiRole.addToPolicy(new PolicyStatement({
+            resources: [`arn:aws:dynamodb:${region}:${accountId}:table/${dynamoTableName}`],
+            actions: [
+                'dynamodb:GetItem']
         }));
 
         const twitterLambdaFunction = new lambda.Function(this, twitterLambdaName, {
@@ -135,5 +147,67 @@ export class CdkTwitterStack extends cdk.Stack {
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
             timeToLiveAttribute: 'expiry'
         });
+
+        const api = new RestApi(this, apiName, {
+            defaultCorsPreflightOptions: {
+                allowOrigins: Cors.ALL_ORIGINS,
+            },
+            restApiName: apiName,
+        });
+
+        const allResources = api.root.addResource(apiName.toLocaleLowerCase());
+
+        const oneResource = allResources.addResource('{id}');
+
+        const errorResponses = [
+            {
+                selectionPattern: '400',
+                statusCode: '400',
+                responseTemplates: {
+                    'application/json': `{
+                        "error": "Bad Input"
+                    }`,
+            },
+            },
+            {
+                selectionPattern: '5\\d{2}',
+                statusCode: '500',
+                responseTemplates: {
+                    'application/json': `{
+                    "error": "Internal Service Error"
+                    }`,
+                },
+            },
+        ];
+
+        const integrationResponses = [
+            {
+                statusCode: '200',
+            },
+            ...errorResponses,
+        ];
+
+        const getIntegration = new AwsIntegration({
+            action: 'GetItem',
+            options: {
+                credentialsRole: apiRole,
+                integrationResponses,
+                requestTemplates: {
+                    'application/json': `{
+                        "Key": {
+                            "username": {
+                            "S": "$method.request.path.id"
+                        }
+                    },
+                    "TableName": "${dynamoTableName}"
+                }`,
+                },
+            },
+            service: 'dynamodb',
+        });
+
+        const methodOptions = { methodResponses: [{ statusCode: '200' }, { statusCode: '400' }, { statusCode: '500' }] };
+
+        oneResource.addMethod('GET', getIntegration, methodOptions);
     }
 }
