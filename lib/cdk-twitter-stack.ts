@@ -103,7 +103,7 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const twitterLambdaFunction = new LambdaFunction(this, twitterLambdaName, {
             functionName: twitterLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../app/src')),
+            code: Code.fromAsset(path.join(__dirname, '../lambdas/src')),
             role: twitterLambdaRole,
             handler: 'twitter_lambda.main.handler',
             runtime: Runtime.PYTHON_3_8,
@@ -123,7 +123,7 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const dynamoLambdaFunction = new LambdaFunction(this, dynamoLambdaName, {
             functionName: dynamoLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../app/src')),
+            code: Code.fromAsset(path.join(__dirname, '../lambdas/src')),
             role: dynamoLambdaRole,
             handler: 'dynamo_lambda.main.handler',
             runtime: Runtime.PYTHON_3_8,

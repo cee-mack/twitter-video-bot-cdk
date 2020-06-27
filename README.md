@@ -42,7 +42,7 @@ $ export AWS_PROFILE=<aws profile>
 The requirements need to be packaged within the project for AWS lambda. The following installs the packages in a
 dependencies directory, and installs the node packages for CDK:
 ```sh
-$ pip install -r app/requirements/base.txt -t app/src/dependencies
+$ pip install -r lambdas/requirements/base.txt -t lambdas/src/dependencies
 $ npm install
 ```
 

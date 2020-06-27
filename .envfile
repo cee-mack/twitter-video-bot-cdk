@@ -1,2 +1,2 @@
-PYTHONPATH="$PYTHONPATH:app/src:/app/src/dependencies"
+PYTHONPATH="$PYTHONPATH:lambdas/src:/lambdas/src/dependencies"
 REGION=eu-west-1
