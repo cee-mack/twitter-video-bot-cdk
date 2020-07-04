@@ -103,7 +103,7 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const twitterLambdaFunction = new LambdaFunction(this, twitterLambdaName, {
             functionName: twitterLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../app/src')),
+            code: Code.fromAsset(path.join(__dirname, '../lambdas/src')),
             role: twitterLambdaRole,
             handler: 'twitter_lambda.main.handler',
             runtime: Runtime.PYTHON_3_8,
@@ -123,7 +123,7 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const dynamoLambdaFunction = new LambdaFunction(this, dynamoLambdaName, {
             functionName: dynamoLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../app/src')),
+            code: Code.fromAsset(path.join(__dirname, '../lambdas/src')),
             role: dynamoLambdaRole,
             handler: 'dynamo_lambda.main.handler',
             runtime: Runtime.PYTHON_3_8,
@@ -148,67 +148,5 @@ export class CdkTwitterStack extends cdk.Stack {
             billingMode: BillingMode.PAY_PER_REQUEST,
             timeToLiveAttribute: 'expiry'
         });
-
-        const api = new RestApi(this, apiName, {
-            defaultCorsPreflightOptions: {
-                allowOrigins: Cors.ALL_ORIGINS,
-            },
-            restApiName: apiName,
-        });
-
-        const allResources = api.root.addResource(apiName.toLocaleLowerCase());
-
-        const oneResource = allResources.addResource('{id}');
-
-        const errorResponses = [
-            {
-                selectionPattern: '400',
-                statusCode: '400',
-                responseTemplates: {
-                    'application/json': `{
-                        "error": "Bad Input"
-                    }`,
-            },
-            },
-            {
-                selectionPattern: '5\\d{2}',
-                statusCode: '500',
-                responseTemplates: {
-                    'application/json': `{
-                    "error": "Internal Service Error"
-                    }`,
-                },
-            },
-        ];
-
-        const integrationResponses = [
-            {
-                statusCode: '200',
-            },
-            ...errorResponses,
-        ];
-
-        const getIntegration = new AwsIntegration({
-            action: 'GetItem',
-            options: {
-                credentialsRole: apiRole,
-                integrationResponses,
-                requestTemplates: {
-                    'application/json': `{
-                        "Key": {
-                            "username": {
-                            "S": "$method.request.path.id"
-                        }
-                    },
-                    "TableName": "${dynamoTableName}"
-                }`,
-                },
-            },
-            service: 'dynamodb',
-        });
-
-        const methodOptions = { methodResponses: [{ statusCode: '200' }, { statusCode: '400' }, { statusCode: '500' }] };
-
-        oneResource.addMethod('GET', getIntegration, methodOptions);
     }
 }
