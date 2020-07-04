@@ -1,7 +1,7 @@
 import { Rule, Schedule } from '@aws-cdk/aws-events';
 import { LambdaFunction as LambdaFunctionTarget } from '@aws-cdk/aws-events-targets';
 import { Code, Runtime, Function as LambdaFunction } from '@aws-cdk/aws-lambda';
-import { AwsIntegration, Cors, RestApi } from '@aws-cdk/aws-apigateway';
+import { LambdaRestApi } from '@aws-cdk/aws-apigateway';
 import { StringParameter } from '@aws-cdk/aws-ssm';
 import { Role, ServicePrincipal } from  '@aws-cdk/aws-iam';
 import { Table, AttributeType, BillingMode } from '@aws-cdk/aws-dynamodb';
@@ -19,6 +19,7 @@ export class CdkTwitterStack extends cdk.Stack {
         const region = cdk.Stack.of(this).region;
         const twitterLambdaName = 'cdk-twitter-lambda';
         const dynamoLambdaName = 'cdk-dynamo-lambda';
+        const uiLambdaName = 'cdk-ui-lambda';
         const dynamoTableName = 'cdk-twitter-dynamo';
         const apiName = 'TwitterAppApi';
         const pythonPath = '/var/task/dependencies:/var/runtime';
@@ -56,11 +57,11 @@ export class CdkTwitterStack extends cdk.Stack {
             assumedBy: new ServicePrincipal('lambda.amazonaws.com')
         });
 
-        const apiRole = new Role(this, 'apiRole', {
-            assumedBy: new ServicePrincipal('apigateway.amazonaws.com')
+        const dynamoLambdaRole = new Role(this, 'dynamoLambdaRole', {
+            assumedBy: new ServicePrincipal('lambda.amazonaws.com')
         });
 
-        const dynamoLambdaRole = new Role(this, 'dynamoLambdaRole', {
+        const uiLambdaRole = new Role(this, 'uiLambdaRole', {
             assumedBy: new ServicePrincipal('lambda.amazonaws.com')
         });
 
@@ -87,6 +88,12 @@ export class CdkTwitterStack extends cdk.Stack {
                 'dynamodb:GetItem']
         }));
 
+        uiLambdaRole.addToPolicy(new PolicyStatement({
+            resources: [`arn:aws:dynamodb:${region}:${accountId}:table/${dynamoTableName}`],
+            actions: [
+                'dynamodb:GetItem']
+        }));
+
         dynamoLambdaRole.addToPolicy(new PolicyStatement({
             resources: ['*'],
             actions: [
@@ -95,10 +102,12 @@ export class CdkTwitterStack extends cdk.Stack {
                 'logs:PutLogEvents']
         }));
 
-        apiRole.addToPolicy(new PolicyStatement({
-            resources: [`arn:aws:dynamodb:${region}:${accountId}:table/${dynamoTableName}`],
+        uiLambdaRole.addToPolicy(new PolicyStatement({
+            resources: ['*'],
             actions: [
-                'dynamodb:GetItem']
+                'logs:CreateLogGroup',
+                'logs:CreateLogStream',
+                'logs:PutLogEvents']
         }));
 
         const twitterLambdaFunction = new LambdaFunction(this, twitterLambdaName, {
@@ -135,6 +144,20 @@ export class CdkTwitterStack extends cdk.Stack {
             }
         });
 
+
+        const uiLambdaFunction = new LambdaFunction(this, uiLambdaName, {
+            functionName: uiLambdaName,
+            code: Code.fromAsset(path.join(__dirname, '../lambdas/src')),
+            role: uiLambdaRole,
+            handler: 'ui_lambda.main.handler',
+            runtime: Runtime.PYTHON_3_8,
+            timeout: cdk.Duration.seconds(10),
+            environment: {
+                'REGION': region,
+                'PYTHONPATH': pythonPath
+            }
+        });
+
         const twitterLambdaRule = new Rule(this, 'twitterLambdaRule', {
             schedule: Schedule.expression('cron(0/1 * * * ? *)')
         });
@@ -148,5 +171,16 @@ export class CdkTwitterStack extends cdk.Stack {
             billingMode: BillingMode.PAY_PER_REQUEST,
             timeToLiveAttribute: 'expiry'
         });
+
+        const api = new LambdaRestApi(this, 'uiApi', {
+            handler: uiLambdaFunction,
+            proxy: false
+        });
+
+        const items = api.root.addResource('items');
+            items.addMethod('GET');
+
+        const item = items.addResource('{item}');
+            item.addMethod('GET');
     }
 }
