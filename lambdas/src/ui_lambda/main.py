@@ -1,7 +1,7 @@
 import boto3
 import os
 import logging
-import json
+import simplejson
 
 
 logger = logging.getLogger()
@@ -16,17 +16,22 @@ def handler(event, context):
     if event:
         username = event['pathParameters']['item']
         document = queryDynamo(username)
-        documentBody = json.dumps({"document": document})
+        documentBody = simplejson.dumps({"document": document})
         statuscode = 200
 
         if 'Item' not in document:
             logger.info(f'No document found in Dynamo for user: {username}')
             statuscode = 404
-            documentBody = json.dumps({"error": "No document found for given user"})
+            documentBody = simplejson.dumps({"error": "No document found for given user"})
 
         responseBody = {
                 "statusCode": statuscode,
-                "body": documentBody
+                "body": documentBody,
+                "headers": {
+                    "Access-Control-Allow-Headers" : "Content-Type",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "GET"
+                }
         }
 
         return responseBody
@@ -37,4 +42,4 @@ def queryDynamo(username):
             'username': username
         })
 
-    return str(document)
+    return document
