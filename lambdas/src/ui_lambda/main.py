@@ -16,22 +16,20 @@ def handler(event, context):
     if event:
         username = event['pathParameters']['item']
         document = queryDynamo(username)
+        documentBody = json.dumps({"document": document})
+        statuscode = 200
 
-        if 'Item' in document:
-            return {
-                "statusCode": 200,
-                "body": json.dumps({
-                    "document": document
-                })
-            }
-        else:
+        if 'Item' not in document:
             logger.info(f'No document found in Dynamo for user: {username}')
-            return {
-                "statusCode": 404,
-                "body": json.dumps({
-                    "error": "Not found"
-                })
-            }
+            statuscode = 404
+            documentBody = json.dumps({"error": "No document found for given user"})
+
+        responseBody = {
+                "statusCode": statuscode,
+                "body": documentBody
+        }
+
+        return responseBody
 
 def queryDynamo(username):
     document = table.get_item(
