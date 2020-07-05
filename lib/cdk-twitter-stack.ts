@@ -174,7 +174,7 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const api = new LambdaRestApi(this, 'uiApi', {
             handler: uiLambdaFunction,
-            proxy: false,
+            proxy: false
         });
 
         const items = api.root.addResource('items');
