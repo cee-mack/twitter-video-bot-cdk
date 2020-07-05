@@ -1,7 +1,7 @@
 import { Rule, Schedule } from '@aws-cdk/aws-events';
 import { LambdaFunction as LambdaFunctionTarget } from '@aws-cdk/aws-events-targets';
 import { Code, Runtime, Function as LambdaFunction } from '@aws-cdk/aws-lambda';
-import { LambdaRestApi } from '@aws-cdk/aws-apigateway';
+import { LambdaRestApi, Cors } from '@aws-cdk/aws-apigateway';
 import { StringParameter } from '@aws-cdk/aws-ssm';
 import { Role, ServicePrincipal } from  '@aws-cdk/aws-iam';
 import { Table, AttributeType, BillingMode } from '@aws-cdk/aws-dynamodb';
@@ -174,7 +174,7 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const api = new LambdaRestApi(this, 'uiApi', {
             handler: uiLambdaFunction,
-            proxy: false
+            proxy: false,
         });
 
         const items = api.root.addResource('items');
