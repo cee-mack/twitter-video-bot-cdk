@@ -16,7 +16,7 @@ table = dynamodb.Table('cdk-twitter-dynamo')
 
 def handler(event, context):
     if event:
-        username = event['username']
+        username = event['username'].lower()
         tweet_id = event['tweet_id']
         video_link = event['video_link']
 
