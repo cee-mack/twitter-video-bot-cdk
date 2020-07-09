@@ -14,7 +14,7 @@ table = dynamodb.Table('cdk-twitter-dynamo')
 
 def handler(event, context):
     if event:
-        username = event['pathParameters']['item']
+        username = event['pathParameters']['item'].lower()
         document = queryDynamo(username)
         documentBody = simplejson.dumps({"document": document})
         statuscode = 200
