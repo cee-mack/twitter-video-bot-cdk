@@ -24,7 +24,10 @@ api = tweepy.API(auth)
 client = boto3.client('lambda')
 
 def handler(event, context):
-    reply_to_statuses()
+    get_latest_id = api.get_user(twitter_account_name)
+    latest_id = get_latest_id._json['status']['id'] - 1
+    search = api.search(search_string, tweet_mode='extended', since_id=latest_id)
+    reply_to_statuses(search)
 
 
 class Tweet:
@@ -45,12 +48,7 @@ class Tweet:
             "video_link": self.video_link
         }
 
-def reply_to_statuses():
-
-    get_latest_id = api.get_user(twitter_account_name)
-    latest_id = get_latest_id._json['status']['id'] - 1
-
-    search = api.search(search_string, tweet_mode='extended', since_id=latest_id)
+def reply_to_statuses(search):
 
     logger.info(f'Search {search}')
 
