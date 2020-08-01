@@ -30,39 +30,23 @@ def handler(event, context):
     reply_to_statuses(search)
 
 
-class Tweet:
-    def __init__(self, result):
-        self.result = result
-        self.video_link = None
-        self.tweet_id = self.result._json['id']
-        self.parent_tweet_id = self.result._json['in_reply_to_status_id']
-        self.user_screen_name = self.result._json['user']['screen_name']
-
-    def set_video_link(self, link):
-        self.video_link = link
-
-    def asdict(self):
-        return {
-            "tweet_id": self.tweet_id,
-            "username": self.user_screen_name,
-            "video_link": self.video_link
-        }
-
 def reply_to_statuses(search):
 
     logger.info(f'Search {search}')
 
     if search:
         for result in search:
-            tweet = Tweet(result)
-            parent_tweet_data = api.get_status(tweet.parent_tweet_id, tweet_mode='extended')
-            tweet.set_video_link(return_highest_bitrate(parent_tweet_data._json))
-            api.update_status(construct_message(tweet.user_screen_name, tweet.video_link), tweet.tweet_id)
+            tweet_id = result._json['id']
+            parent_tweet_id = result._json['in_reply_to_status_id']
+            user_screen_name = result._json['user']['screen_name']
+            parent_tweet_data = api.get_status(parent_tweet_id, tweet_mode='extended')
+            video_link = return_highest_bitrate(parent_tweet_data._json)
+            api.update_status(construct_message(user_screen_name, video_link), tweet_id)
 
-            if tweet.video_link:
-                invoke_dynamo_lambda(tweet.asdict())
+            if video_link:
+                invoke_dynamo_lambda(tweet_id, user_screen_name, video_link)
             else:
-                logger.info(f'No video was found under comment for tweet ID {tweet.tweet_id}')
+                logger.info(f'No video was found under comment for tweet ID {tweet_id}')
 
     else:
         logger.info('Search returned no results')
@@ -88,12 +72,16 @@ def return_highest_bitrate(parent_tweet_data):
     except KeyError:
         return None
 
-def invoke_dynamo_lambda(tweet_data):
+def invoke_dynamo_lambda(tweet_id, user_screen_name, video_link):
     response = client.invoke(
     FunctionName=f'arn:aws:lambda:{region}:{account_id}:function:cdk-dynamo-lambda',
     InvocationType='RequestResponse',
     LogType='None',
-    Payload=json.dumps(tweet_data),
+    Payload=json.dumps({
+            "tweet_id": tweet_id,
+            "username": user_screen_name,
+            "video_link": video_link
+        }),
     )
 
     logger.info(f'Invoked dynamo lambda with response: {response}')
