@@ -12,10 +12,10 @@ session = boto3.session.Session()
 dynamodb = session.resource('dynamodb', region)
 table = dynamodb.Table('cdk-twitter-dynamo')
 
-def handler(event, context):
+def handler(event: dict, context):
     if event:
-        username = event['pathParameters']['item'].lower()
-        document = queryDynamo(username)
+        username: str = event['pathParameters']['item'].lower()
+        document: dict = queryDynamo(username)
         documentBody = simplejson.dumps({"document": document})
         statuscode = 200
 
@@ -36,8 +36,8 @@ def handler(event, context):
 
         return responseBody
 
-def queryDynamo(username):
-    document = table.get_item(
+def queryDynamo(username: str):
+    document: dict = table.get_item(
         Key={
             'username': username
         })

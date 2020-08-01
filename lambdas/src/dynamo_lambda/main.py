@@ -14,29 +14,28 @@ dynamodb = session.resource('dynamodb', region)
 table = dynamodb.Table('cdk-twitter-dynamo')
 
 
-def handler(event, context):
+def handler(event: dict, context):
     if event:
-        username = event['username'].lower()
-        tweet_id = event['tweet_id']
-        video_link = event['video_link']
+        username: str = event['username'].lower()
+        tweet_id: int = event['tweet_id']
+        video_link: str = event['video_link']
 
         write_tweet_to_db(username, tweet_id, video_link)
 
-    print(event)
 
-def write_tweet_to_db(username, tweet_id, video_link):
-    user_document = get_document(username)
+def write_tweet_to_db(username: str, tweet_id: int, video_link: str):
+    user_document: dict = get_document(username)
     expiration_date = int(time.time()) + (int(expiration_days) * 86400)
 
     if 'Item' in user_document:
-        number_of_existing_tweets = len(user_document['Item']['tweet'])
+        number_of_existing_tweets: int = len(user_document['Item']['tweet'])
         update_user_document(username, tweet_id, video_link, number_of_existing_tweets, expiration_date)
     else:
         put_new_user_document(username, tweet_id, video_link, expiration_date)
 
 
-def get_document(username):
-    document = table.get_item(
+def get_document(username: str):
+    document: dict = table.get_item(
         Key={
             'username': username
         })
@@ -44,7 +43,7 @@ def get_document(username):
     return document
 
 
-def update_user_document(username, tweet_id, video_link, number_of_existing_tweets, expiration_date):
+def update_user_document(username: str, tweet_id: int, video_link: str, number_of_existing_tweets: int, expiration_date: int):
 
     if number_of_existing_tweets >= 5:
         update = table.update_item(
@@ -73,7 +72,7 @@ def update_user_document(username, tweet_id, video_link, number_of_existing_twee
     return update
 
 
-def put_new_user_document(username, tweet_id, video_link, expiration_date):
+def put_new_user_document(username: str, tweet_id: int, video_link: str, expiration_date: int):
     put_id = table.put_item(
         Item={
             'username': username,
