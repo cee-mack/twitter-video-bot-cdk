@@ -68,6 +68,12 @@ def construct_message(user_screen_name: str, video_link: str):
 
 
 def return_highest_bitrate(parent_tweet_data: tweepy.models.Status):
+    """
+    This function will loop over all the available
+    media entities on the tweet object and return the link with the
+    highest bitrate. It returns None if there is no media
+    associated with the tweet.
+    """
     def get_video_bitrate(video: dict):
         return video['bitrate']
 
