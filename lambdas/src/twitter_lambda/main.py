@@ -33,6 +33,12 @@ def handler(event: dict, context):
 
 
 def reply_to_statuses(search: tweepy.models.SearchResults):
+    """
+    Loops over all tweets that are returned from the search,
+    replies to each with either a video link, or a comment
+    saying no media was found. If there is a video link, another
+    lambda is invoked to pass the data to a dynamoDB table
+    """
 
     logger.info(f'Search {search}')
 
@@ -62,6 +68,12 @@ def construct_message(user_screen_name: str, video_link: str):
 
 
 def return_highest_bitrate(parent_tweet_data: tweepy.models.Status):
+    """
+    This function will loop over all the available
+    media entities on the tweet object and return the link with the
+    highest bitrate. It returns None if there is no media
+    associated with the tweet.
+    """
     def get_video_bitrate(video: dict):
         return video['bitrate']
 
