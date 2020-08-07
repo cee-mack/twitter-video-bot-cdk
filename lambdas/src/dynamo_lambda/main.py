@@ -44,7 +44,11 @@ def get_document(username: str):
 
 
 def update_user_document(username: str, tweet_id: int, video_link: str, number_of_existing_tweets: int, expiration_date: int):
-
+    """
+    If the document already has 5 tweets saved,
+    this will first remove the oldest of them
+    before inserting the new record.
+    """
     if number_of_existing_tweets >= 5:
         update = table.update_item(
             Key={
