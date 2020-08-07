@@ -33,6 +33,12 @@ def handler(event: dict, context):
 
 
 def reply_to_statuses(search: tweepy.models.SearchResults):
+    """
+    Loops over all tweets that are returned from the search,
+    replies to each with either a video link, or a comment
+    saying no media was found. If there is a video link, another
+    lambda is invoked to pass the data to a dynamoDB table
+    """
 
     logger.info(f'Search {search}')
 
