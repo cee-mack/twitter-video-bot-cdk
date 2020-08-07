@@ -58,8 +58,7 @@ def reply_to_statuses(search: tweepy.models.SearchResults):
 def construct_message(user_screen_name: str, video_link: str):
     if video_link:
         return f'@{user_screen_name} Beep beep boop I am a bot! {video_link}'
-    else:
-        return f'@{user_screen_name} Sorry! No video was found :('
+    return f'@{user_screen_name} Sorry! No video was found :('
 
 
 def return_highest_bitrate(parent_tweet_data: tweepy.models.Status):
