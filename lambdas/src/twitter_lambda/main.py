@@ -69,22 +69,18 @@ def construct_message(user_screen_name: str, video_link: str):
 
 def return_highest_bitrate(parent_tweet_data: tweepy.models.Status):
     """
-    This function will loop over all the available
-    media entities on the tweet object and return the link with the
-    highest bitrate. It returns None if there is no media
-    associated with the tweet.
+    'media_links' is an array of dicts. The 'max' function
+    beneath returns the entire dict that has the highest bitrate, if
+    the content type == 'video/mp4'.
+    I then query the ['url'] of the dict thats returned, and return it.
     """
-    def get_video_bitrate(video: dict):
-        return video['bitrate']
-
     try:
-        parent_video_url: str = parent_tweet_data['extended_entities']['media'][0]['video_info']['variants']
-        mp4_videos: list = [video for video in parent_video_url if video['content_type'] == 'video/mp4']
-        highest_bitrate_video: dict = max(mp4_videos, key=get_video_bitrate)
-        return highest_bitrate_video['url']
+        media_links: list = parent_tweet_data['extended_entities']['media'][0]['video_info']['variants']
+        return max(media_links, key=lambda n:n.get("bitrate", 0) if n.get('content_type') == 'video/mp4' else False)['url']
 
     except KeyError:
         return None
+
 
 def invoke_dynamo_lambda(tweet_id: int, user_screen_name: str, video_link: str):
     response = client.invoke(
