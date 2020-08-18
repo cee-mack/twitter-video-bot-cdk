@@ -44,7 +44,7 @@ def reply_to_statuses(search: tweepy.models.SearchResults):
 
     if search:
         for result in search:
-            tweet_id: int = result._json['id']
+            tweet_id: str = str(result._json['id'])
             parent_tweet_id: int = result._json['in_reply_to_status_id']
             user_screen_name: str = result._json['user']['screen_name']
             parent_tweet_data: tweepy.models.Status = api.get_status(parent_tweet_id, tweet_mode='extended')
@@ -82,7 +82,7 @@ def return_highest_bitrate(parent_tweet_data: tweepy.models.Status):
         return None
 
 
-def invoke_dynamo_lambda(tweet_id: int, user_screen_name: str, video_link: str):
+def invoke_dynamo_lambda(tweet_id: str, user_screen_name: str, video_link: str):
     response = client.invoke(
     FunctionName=f'arn:aws:lambda:{region}:{account_id}:function:cdk-dynamo-lambda',
     InvocationType='RequestResponse',
