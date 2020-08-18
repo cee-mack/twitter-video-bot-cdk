@@ -17,13 +17,13 @@ table = dynamodb.Table('cdk-twitter-dynamo')
 def handler(event: dict, context):
     if event:
         username: str = event['username'].lower()
-        tweet_id: int = event['tweet_id']
+        tweet_id: str = event['tweet_id']
         video_link: str = event['video_link']
 
         write_tweet_to_db(username, tweet_id, video_link)
 
 
-def write_tweet_to_db(username: str, tweet_id: int, video_link: str):
+def write_tweet_to_db(username: str, tweet_id: str, video_link: str):
     user_document: dict = get_document(username)
     expiration_date = int(time.time()) + (int(expiration_days) * 86400)
 
@@ -43,7 +43,7 @@ def get_document(username: str):
     return document
 
 
-def update_user_document(username: str, tweet_id: int, video_link: str, number_of_existing_tweets: int, expiration_date: int):
+def update_user_document(username: str, tweet_id: str, video_link: str, number_of_existing_tweets: int, expiration_date: int):
     """
     If the document already has 5 tweets saved,
     this will first remove the oldest of them
@@ -76,7 +76,7 @@ def update_user_document(username: str, tweet_id: int, video_link: str, number_o
     return update
 
 
-def put_new_user_document(username: str, tweet_id: int, video_link: str, expiration_date: int):
+def put_new_user_document(username: str, tweet_id: str, video_link: str, expiration_date: int):
     put_id = table.put_item(
         Item={
             'username': username,
