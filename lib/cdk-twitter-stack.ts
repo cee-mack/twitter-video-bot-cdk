@@ -1,5 +1,5 @@
 import { Rule, Schedule } from '@aws-cdk/aws-events';
-import { LambdaFunction as LambdaFunctionTarget } from '@aws-cdk/aws-events-targets';
+import { LambdaFunction as LambdaFunctionTarget, SfnStateMachine } from '@aws-cdk/aws-events-targets';
 import { Code, Runtime, Function as LambdaFunction } from '@aws-cdk/aws-lambda';
 import { LambdaRestApi } from '@aws-cdk/aws-apigateway';
 import { StringParameter } from '@aws-cdk/aws-ssm';
@@ -110,7 +110,7 @@ export class CdkTwitterStack extends cdk.Stack {
                 'logs:PutLogEvents']
         }));
 
-        const twitterLambdaFunction = new LambdaFunction(this, twitterLambdaName, {
+        const twitterSearchLambdaFunction = new LambdaFunction(this, twitterLambdaName, {
             functionName: twitterLambdaName,
             code: Code.fromAsset(path.join(__dirname, '../lambdas/src')),
             role: twitterLambdaRole,
@@ -126,7 +126,8 @@ export class CdkTwitterStack extends cdk.Stack {
                 'REGION': region,
                 'TWITTERACCOUNTNAME': twitterAccountName,
                 'ACCOUNTID': accountId,
-                'PYTHONPATH': pythonPath
+                'PYTHONPATH': pythonPath,
+                'STATE_MACHINE_ARN': SfnStateMachine.stateMachineArn
             }
         });
 
@@ -162,7 +163,7 @@ export class CdkTwitterStack extends cdk.Stack {
             schedule: Schedule.expression('cron(0/1 * * * ? *)')
         });
 
-        twitterLambdaRule.addTarget(new LambdaFunctionTarget(twitterLambdaFunction));
+        twitterLambdaRule.addTarget(new LambdaFunctionTarget(twitterSearchLambdaFunction));
 
         new Table(this, dynamoTableName, {
             tableName: dynamoTableName,
