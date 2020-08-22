@@ -23,6 +23,7 @@ def handler(event: dict, context):
         Key={
             'username': user_screen_name
         })
+        
     if 'Item' in user_document:
         user_exists = 1
 

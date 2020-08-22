@@ -26,10 +26,10 @@ client = boto3.client("stepfunctions")
 
 def handler(event: dict, context):
 
-    main_account_tweets: tweepy.models.User = api.get_user(twitter_account_name)
-    latest_id: int = main_account_tweets._json['status']['id'] - 1
+    main_account_tweets = api.get_user(twitter_account_name)
+    latest_id = main_account_tweets._json['status']['id'] - 1
 
-    search: tweepy.models.SearchResults = api.search(search_string, tweet_mode='extended', since_id=latest_id)
+    search = api.search(search_string, tweet_mode='extended', since_id=latest_id)
 
     if search:
         for result in search:
@@ -38,13 +38,13 @@ def handler(event: dict, context):
                 "parent_tweet_id": result._json['in_reply_to_status_id'],
                 "user_screen_name": result._json['user']['screen_name']
             }
-            logger.info(f"Executing Step Function", {
+            try:
+                logger.info(f"Executing Step Function", {
                 "tweet_id": payload["tweet_id"]
             })
-            try:
                 client.start_execution(
                     stateMachineArn=state_machine_arn,
-                    name=f"execution-tweet-id-{payload['tweet_id']}",
+                    name=f"execution-tweet-{payload['tweet_id']}",
                     input=json.dumps(payload)
                 )
             except ClientError as err:

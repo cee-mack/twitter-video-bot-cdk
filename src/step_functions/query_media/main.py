@@ -21,7 +21,7 @@ def handler(event: dict, context):
     parent_tweet_id = event["parent_tweet_id"]
     user_screen_name = event["user_screen_name"]
 
-    parent_tweet_data: tweepy.models.Status = api.get_status(parent_tweet_id, tweet_mode='extended')
+    parent_tweet_data = api.get_status(parent_tweet_id, tweet_mode='extended')
 
     video_link = return_highest_bitrate(parent_tweet_data)
 
@@ -38,7 +38,7 @@ def return_highest_bitrate(parent_tweet_data: tweepy.models.Status):
     'media_links' is an array of dicts. The 'max' function
     beneath returns the entire dict that has the highest bitrate, if
     the content type == 'video/mp4'.
-    I then query the ['url'] of the dict thats returned, and return it.
+    It then queries the ['url'] of the dict thats returned, and returns it.
     """
     try:
         media_links: list = parent_tweet_data['extended_entities']['media'][0]['video_info']['variants']
