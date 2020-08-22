@@ -126,7 +126,7 @@ export class CdkTwitterStack extends cdk.Stack {
                 'SEARCHSTRING': searchString,
                 'TWITTERACCOUNTNAME': twitterAccountName,
                 'PYTHONPATH': pythonPath,
-                'STATE_MACHINE_ARN': SfnStateMachine.stateMachineArn
+                'STATE_MACHINE_ARN': 'arn:aws:states:eu-west-1:584203194758:stateMachine:TwitterStateMachine'
             }
         });
 
@@ -223,9 +223,9 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const uiLambdaFunction = new LambdaFunction(this, uiLambdaName, {
             functionName: uiLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../lambdas/src')),
+            code: Code.fromAsset(path.join(__dirname, '../src/lambda/ui_lambda')),
             role: uiLambdaRole,
-            handler: 'ui_lambda.main.handler',
+            handler: 'main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -238,7 +238,7 @@ export class CdkTwitterStack extends cdk.Stack {
             schedule: Schedule.expression('cron(0/1 * * * ? *)')
         });
 
-        twitterLambdaRule.addTarget(new LambdaFunctionTarget(twitterSearchLambdaFunction));
+        twitterLambdaRule.addTarget(new LambdaFunctionTarget(twitterSearchFunction));
 
         new Table(this, dynamoTableName, {
             tableName: dynamoTableName,
@@ -288,7 +288,7 @@ export class CdkTwitterStack extends cdk.Stack {
             .next(dynamoQueryTask)
             .next(dynamoUpdateTask)
 
-        new sfn.StateMachine(this, 'StateMachine', {
+        const SfnStateMachine = new sfn.StateMachine(this, 'TwitterStateMachine', {
             definition,
             timeout: cdk.Duration.minutes(5)
         });
