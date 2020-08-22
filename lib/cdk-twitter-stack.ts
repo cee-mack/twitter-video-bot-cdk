@@ -3,11 +3,13 @@ import { LambdaFunction as LambdaFunctionTarget, SfnStateMachine } from '@aws-cd
 import { Code, Runtime, Function as LambdaFunction } from '@aws-cdk/aws-lambda';
 import { LambdaRestApi } from '@aws-cdk/aws-apigateway';
 import { StringParameter } from '@aws-cdk/aws-ssm';
-import { Role, ServicePrincipal } from  '@aws-cdk/aws-iam';
+import { Role, ServicePrincipal } from '@aws-cdk/aws-iam';
 import { Table, AttributeType, BillingMode } from '@aws-cdk/aws-dynamodb';
 import { RemovalPolicy } from '@aws-cdk/core';
 import { PolicyStatement } from "@aws-cdk/aws-iam";
 import * as cdk from '@aws-cdk/core';
+import * as sfn from '@aws-cdk/aws-stepfunctions';
+import * as tasks from '@aws-cdk/aws-stepfunctions-tasks';
 
 import path = require('path');
 
@@ -17,9 +19,14 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const accountId = cdk.Stack.of(this).account;
         const region = cdk.Stack.of(this).region;
-        const twitterLambdaName = 'cdk-twitter-lambda';
-        const dynamoLambdaName = 'cdk-dynamo-lambda';
-        const uiLambdaName = 'cdk-ui-lambda';
+        const twitterSearchLambdaName = 'cdk-twitter-lambda';
+        const dynamoPutLambdaName = 'dynamo-put-lambda';
+        const dynamoQueryLambdaName = 'dynamo-query-lambda';
+        const dynamoUpdateLambdaName = 'dynamo-update-lambda';
+        const queryMediaLambdaName = 'query-media-lambda';
+        const replyNoMediaLambdaName = 'reply-no-media-lambda';
+        const replyWithMediaLambdaName = 'reply-with-media-lambda';
+        const uiLambdaName = 'ui-lambda';
         const dynamoTableName = 'cdk-twitter-dynamo';
         const apiName = 'TwitterAppApi';
         const pythonPath = '/var/task/dependencies:/var/runtime';
@@ -73,12 +80,6 @@ export class CdkTwitterStack extends cdk.Stack {
                 'logs:PutLogEvents']
         }));
 
-        twitterLambdaRole.addToPolicy(new PolicyStatement({
-            resources: [`arn:aws:lambda:${region}:${accountId}:function:${dynamoLambdaName}`],
-            actions: [
-                'lambda:InvokeFunction']
-        }));
-
         dynamoLambdaRole.addToPolicy(new PolicyStatement({
             resources: [`arn:aws:dynamodb:${region}:${accountId}:table/${dynamoTableName}`],
             actions: [
@@ -110,11 +111,11 @@ export class CdkTwitterStack extends cdk.Stack {
                 'logs:PutLogEvents']
         }));
 
-        const twitterSearchLambdaFunction = new LambdaFunction(this, twitterLambdaName, {
-            functionName: twitterLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../lambdas/src')),
+        const twitterSearchFunction = new LambdaFunction(this, twitterSearchLambdaName, {
+            functionName: twitterSearchLambdaName,
+            code: Code.fromAsset(path.join(__dirname, '../src/lambda/twitter_search')),
             role: twitterLambdaRole,
-            handler: 'twitter_lambda.main.handler',
+            handler: 'main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -123,24 +124,98 @@ export class CdkTwitterStack extends cdk.Stack {
                 'ACCESSTOKEN': accessToken,
                 'ACCESSTOKENSECRET': accessTokenSecret,
                 'SEARCHSTRING': searchString,
-                'REGION': region,
                 'TWITTERACCOUNTNAME': twitterAccountName,
-                'ACCOUNTID': accountId,
                 'PYTHONPATH': pythonPath,
                 'STATE_MACHINE_ARN': SfnStateMachine.stateMachineArn
             }
         });
 
-        const dynamoLambdaFunction = new LambdaFunction(this, dynamoLambdaName, {
-            functionName: dynamoLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../lambdas/src')),
+        const dynamoPutFunction = new LambdaFunction(this, dynamoPutLambdaName, {
+            functionName: dynamoPutLambdaName,
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/dynamo_put')),
             role: dynamoLambdaRole,
-            handler: 'dynamo_lambda.main.handler',
+            handler: 'main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
                 'REGION': region,
                 'EXPIRATION': expiration,
+                'PYTHONPATH': pythonPath
+            }
+        });
+
+        const dynamoQueryFunction = new LambdaFunction(this, dynamoQueryLambdaName, {
+            functionName: dynamoQueryLambdaName,
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/dynamo_put')),
+            role: dynamoLambdaRole,
+            handler: 'main.handler',
+            runtime: Runtime.PYTHON_3_8,
+            timeout: cdk.Duration.seconds(10),
+            environment: {
+                'REGION': region,
+                'EXPIRATION': expiration,
+                'PYTHONPATH': pythonPath
+            }
+        });
+
+        const dynamoUpdateFunction = new LambdaFunction(this, dynamoUpdateLambdaName, {
+            functionName: dynamoUpdateLambdaName,
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/dynamo_update')),
+            role: dynamoLambdaRole,
+            handler: 'main.handler',
+            runtime: Runtime.PYTHON_3_8,
+            timeout: cdk.Duration.seconds(10),
+            environment: {
+                'REGION': region,
+                'EXPIRATION': expiration,
+                'PYTHONPATH': pythonPath
+            }
+        });
+
+        const queryMediaFunction = new LambdaFunction(this, queryMediaLambdaName, {
+            functionName: queryMediaLambdaName,
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/query_media')),
+            role: twitterLambdaRole,
+            handler: 'main.handler',
+            runtime: Runtime.PYTHON_3_8,
+            timeout: cdk.Duration.seconds(10),
+            environment: {
+                'CONSUMERKEY': consumerKey,
+                'CONSUMERSECRET': consumerSecret,
+                'ACCESSTOKEN': accessToken,
+                'ACCESSTOKENSECRET': accessTokenSecret,
+                'PYTHONPATH': pythonPath
+            }
+        });
+
+        const replyNoMediaFunction = new LambdaFunction(this, replyNoMediaLambdaName, {
+            functionName: replyNoMediaLambdaName,
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/reply_no_media')),
+            role: twitterLambdaRole,
+            handler: 'main.handler',
+            runtime: Runtime.PYTHON_3_8,
+            timeout: cdk.Duration.seconds(10),
+            environment: {
+                'CONSUMERKEY': consumerKey,
+                'CONSUMERSECRET': consumerSecret,
+                'ACCESSTOKEN': accessToken,
+                'ACCESSTOKENSECRET': accessTokenSecret,
+                'PYTHONPATH': pythonPath
+            }
+        });
+
+        const replyWithMediaFunction = new LambdaFunction(this, replyWithMediaLambdaName, {
+            functionName: replyWithMediaLambdaName,
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/reply_with_media')),
+            role: twitterLambdaRole,
+            handler: 'main.handler',
+            runtime: Runtime.PYTHON_3_8,
+            timeout: cdk.Duration.seconds(10),
+            environment: {
+                'CONSUMERKEY': consumerKey,
+                'CONSUMERSECRET': consumerSecret,
+                'ACCESSTOKEN': accessToken,
+                'ACCESSTOKENSECRET': accessTokenSecret,
                 'PYTHONPATH': pythonPath
             }
         });
@@ -168,7 +243,7 @@ export class CdkTwitterStack extends cdk.Stack {
         new Table(this, dynamoTableName, {
             tableName: dynamoTableName,
             removalPolicy: RemovalPolicy.DESTROY,
-            partitionKey: {name: 'username', type: AttributeType.STRING},
+            partitionKey: { name: 'username', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
             timeToLiveAttribute: 'expiry'
         });
@@ -179,9 +254,43 @@ export class CdkTwitterStack extends cdk.Stack {
         });
 
         const items = api.root.addResource('items');
-            items.addMethod('GET');
+        items.addMethod('GET');
 
         const item = items.addResource('{item}');
-            item.addMethod('GET');
+        item.addMethod('GET');
+
+        const queryMediaTask = new sfn.Task(this, 'queryMediaTask', {
+            task: new tasks.InvokeFunction(queryMediaFunction)
+        });
+
+        const replyWithMediaTask = new sfn.Task(this, 'replyWithMediaTask', {
+            task: new tasks.InvokeFunction(replyWithMediaFunction)
+        });
+
+        const replyNoMediaTask = new sfn.Task(this, 'replyNoMediaTask', {
+            task: new tasks.InvokeFunction(replyNoMediaFunction)
+        });
+
+        const dynamoQueryTask = new sfn.Task(this, 'dynamoQueryTask', {
+            task: new tasks.InvokeFunction(dynamoQueryFunction)
+        });
+
+        const dynamoPutTask = new sfn.Task(this, 'dynamoPutTask', {
+            task: new tasks.InvokeFunction(dynamoPutFunction)
+        });
+
+        const dynamoUpdateTask = new sfn.Task(this, 'dynamoUpdateTask', {
+            task: new tasks.InvokeFunction(dynamoUpdateFunction)
+        });
+
+        const definition = sfn.Chain.start(queryMediaTask)
+            .next(replyWithMediaTask)
+            .next(dynamoQueryTask)
+            .next(dynamoUpdateTask)
+
+        new sfn.StateMachine(this, 'StateMachine', {
+            definition,
+            timeout: cdk.Duration.minutes(5)
+        });
     }
 }
