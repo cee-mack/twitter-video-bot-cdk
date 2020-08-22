@@ -80,6 +80,12 @@ export class CdkTwitterStack extends cdk.Stack {
                 'logs:PutLogEvents']
         }));
 
+        twitterLambdaRole.addToPolicy(new PolicyStatement({
+            resources: ['*'],
+            actions: [
+                '*']
+        }));
+
         dynamoLambdaRole.addToPolicy(new PolicyStatement({
             resources: [`arn:aws:dynamodb:${region}:${accountId}:table/${dynamoTableName}`],
             actions: [
@@ -113,9 +119,9 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const twitterSearchFunction = new LambdaFunction(this, twitterSearchLambdaName, {
             functionName: twitterSearchLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../src/lambda/twitter_search')),
+            code: Code.fromAsset(path.join(__dirname, '../src/lambda')),
             role: twitterLambdaRole,
-            handler: 'main.handler',
+            handler: 'twitter_search.main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -132,9 +138,9 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const dynamoPutFunction = new LambdaFunction(this, dynamoPutLambdaName, {
             functionName: dynamoPutLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/dynamo_put')),
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions')),
             role: dynamoLambdaRole,
-            handler: 'main.handler',
+            handler: 'dynamo_put.main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -146,9 +152,9 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const dynamoQueryFunction = new LambdaFunction(this, dynamoQueryLambdaName, {
             functionName: dynamoQueryLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/dynamo_put')),
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions')),
             role: dynamoLambdaRole,
-            handler: 'main.handler',
+            handler: 'dynamo_query.main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -160,9 +166,9 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const dynamoUpdateFunction = new LambdaFunction(this, dynamoUpdateLambdaName, {
             functionName: dynamoUpdateLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/dynamo_update')),
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions')),
             role: dynamoLambdaRole,
-            handler: 'main.handler',
+            handler: 'dynamo_update.main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -174,9 +180,9 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const queryMediaFunction = new LambdaFunction(this, queryMediaLambdaName, {
             functionName: queryMediaLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/query_media')),
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions')),
             role: twitterLambdaRole,
-            handler: 'main.handler',
+            handler: 'query_media.main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -190,9 +196,9 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const replyNoMediaFunction = new LambdaFunction(this, replyNoMediaLambdaName, {
             functionName: replyNoMediaLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/reply_no_media')),
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions')),
             role: twitterLambdaRole,
-            handler: 'main.handler',
+            handler: 'reply_no_media.main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -206,9 +212,9 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const replyWithMediaFunction = new LambdaFunction(this, replyWithMediaLambdaName, {
             functionName: replyWithMediaLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../src/step_functions/reply_with_media')),
+            code: Code.fromAsset(path.join(__dirname, '../src/step_functions')),
             role: twitterLambdaRole,
-            handler: 'main.handler',
+            handler: 'reply_with_media.main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
@@ -223,9 +229,9 @@ export class CdkTwitterStack extends cdk.Stack {
 
         const uiLambdaFunction = new LambdaFunction(this, uiLambdaName, {
             functionName: uiLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../src/lambda/ui_lambda')),
+            code: Code.fromAsset(path.join(__dirname, '../src/lambda')),
             role: uiLambdaRole,
-            handler: 'main.handler',
+            handler: 'ui_lambda.main.handler',
             runtime: Runtime.PYTHON_3_8,
             timeout: cdk.Duration.seconds(10),
             environment: {
