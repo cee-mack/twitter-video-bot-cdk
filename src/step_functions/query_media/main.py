@@ -23,7 +23,7 @@ def handler(event: dict, context):
 
     parent_tweet_data = api.get_status(parent_tweet_id, tweet_mode='extended')
 
-    video_link = return_highest_bitrate(parent_tweet_data)
+    video_link = return_highest_bitrate(parent_tweet_data._json)
 
     payload = {
         "tweet_id": tweet_id,
