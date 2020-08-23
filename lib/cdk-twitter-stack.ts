@@ -117,25 +117,6 @@ export class CdkTwitterStack extends cdk.Stack {
                 'logs:PutLogEvents']
         }));
 
-        const twitterSearchFunction = new LambdaFunction(this, twitterSearchLambdaName, {
-            functionName: twitterSearchLambdaName,
-            code: Code.fromAsset(path.join(__dirname, '../src/lambda')),
-            role: twitterLambdaRole,
-            handler: 'twitter_search.main.handler',
-            runtime: Runtime.PYTHON_3_8,
-            timeout: cdk.Duration.seconds(10),
-            environment: {
-                'CONSUMERKEY': consumerKey,
-                'CONSUMERSECRET': consumerSecret,
-                'ACCESSTOKEN': accessToken,
-                'ACCESSTOKENSECRET': accessTokenSecret,
-                'SEARCHSTRING': searchString,
-                'TWITTERACCOUNTNAME': twitterAccountName,
-                'PYTHONPATH': pythonPath,
-                'STATE_MACHINE_ARN': 'arn:aws:states:eu-west-1:584203194758:stateMachine:TwitterStateMachine'
-            }
-        });
-
         const dynamoPutFunction = new LambdaFunction(this, dynamoPutLambdaName, {
             functionName: dynamoPutLambdaName,
             code: Code.fromAsset(path.join(__dirname, '../src/step_functions')),
@@ -240,12 +221,6 @@ export class CdkTwitterStack extends cdk.Stack {
             }
         });
 
-        const twitterLambdaRule = new Rule(this, 'twitterLambdaRule', {
-            schedule: Schedule.expression('cron(0/1 * * * ? *)')
-        });
-
-        twitterLambdaRule.addTarget(new LambdaFunctionTarget(twitterSearchFunction));
-
         new Table(this, dynamoTableName, {
             tableName: dynamoTableName,
             removalPolicy: RemovalPolicy.DESTROY,
@@ -298,5 +273,30 @@ export class CdkTwitterStack extends cdk.Stack {
             definition,
             timeout: cdk.Duration.minutes(5)
         });
+
+        const twitterSearchFunction = new LambdaFunction(this, twitterSearchLambdaName, {
+            functionName: twitterSearchLambdaName,
+            code: Code.fromAsset(path.join(__dirname, '../src/lambda')),
+            role: twitterLambdaRole,
+            handler: 'twitter_search.main.handler',
+            runtime: Runtime.PYTHON_3_8,
+            timeout: cdk.Duration.seconds(10),
+            environment: {
+                'CONSUMERKEY': consumerKey,
+                'CONSUMERSECRET': consumerSecret,
+                'ACCESSTOKEN': accessToken,
+                'ACCESSTOKENSECRET': accessTokenSecret,
+                'SEARCHSTRING': searchString,
+                'TWITTERACCOUNTNAME': twitterAccountName,
+                'PYTHONPATH': pythonPath,
+                'STATE_MACHINE_ARN': SfnStateMachine.stateMachineArn
+            }
+        });
+
+        const twitterLambdaRule = new Rule(this, 'twitterLambdaRule', {
+            schedule: Schedule.expression('cron(0/1 * * * ? *)')
+        });
+
+        twitterLambdaRule.addTarget(new LambdaFunctionTarget(twitterSearchFunction));
     }
 }
