@@ -3,6 +3,7 @@ import boto3
 import os
 import logging
 import json
+import time
 
 from botocore.exceptions import ClientError
 
@@ -26,6 +27,7 @@ client = boto3.client("stepfunctions")
 
 def handler(event: dict, context):
 
+    timestamp = int(time.time())
     main_account_tweets = api.get_user(twitter_account_name)
     latest_id = main_account_tweets._json['status']['id'] - 1
 
@@ -44,7 +46,7 @@ def handler(event: dict, context):
             })
                 client.start_execution(
                     stateMachineArn=state_machine_arn,
-                    name=f"execution-tweet-{payload['tweet_id']}",
+                    name=f"execution-{timestamp}-{payload['tweet_id']}",
                     input=json.dumps(payload)
                 )
             except ClientError as err:
