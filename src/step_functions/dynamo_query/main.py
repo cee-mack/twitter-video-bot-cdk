@@ -15,7 +15,7 @@ table = dynamodb.Table('cdk-twitter-dynamo')
 def handler(event: dict, context):
 
     tweet_id = event["tweet_id"]
-    user_screen_name = event["user_screen_name"]
+    user_screen_name = event["user_screen_name"].lower()
     video_link = event['video_link']
     user_exists = 0
 
@@ -23,7 +23,7 @@ def handler(event: dict, context):
         Key={
             'username': user_screen_name
         })
-        
+
     if 'Item' in user_document:
         user_exists = 1
 
