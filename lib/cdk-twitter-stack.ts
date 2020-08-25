@@ -7,12 +7,11 @@ import { Role, ServicePrincipal } from '@aws-cdk/aws-iam';
 import { Table, AttributeType, BillingMode } from '@aws-cdk/aws-dynamodb';
 import { RemovalPolicy } from '@aws-cdk/core';
 import { PolicyStatement } from "@aws-cdk/aws-iam";
+import { Task, Choice, Condition, StateMachine } from '@aws-cdk/aws-stepfunctions';
+import { InvokeFunction } from '@aws-cdk/aws-stepfunctions-tasks';
 import * as cdk from '@aws-cdk/core';
-import * as sfn from '@aws-cdk/aws-stepfunctions';
-import * as tasks from '@aws-cdk/aws-stepfunctions-tasks';
 
 import path = require('path');
-import { Choice } from '@aws-cdk/aws-stepfunctions';
 
 export class CdkTwitterStack extends cdk.Stack {
     constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
@@ -31,6 +30,7 @@ export class CdkTwitterStack extends cdk.Stack {
         const dynamoTableName = 'cdk-twitter-dynamo';
         const apiName = 'TwitterAppApi';
         const pythonPath = '/var/task/dependencies:/var/runtime';
+        const stateMachineName = 'TwitterStateMachine';
 
         const accessToken = StringParameter.fromStringParameterAttributes(this, 'accessToken', {
             parameterName: '/twitterlambda/accesstoken',
@@ -82,7 +82,7 @@ export class CdkTwitterStack extends cdk.Stack {
         }));
 
         twitterLambdaRole.addToPolicy(new PolicyStatement({
-            resources: ['*'],
+            resources: [`arn:aws:states:${region}:${accountId}:stateMachine:${stateMachineName}*`],
             actions: [
                 '*']
         }));
@@ -208,7 +208,6 @@ export class CdkTwitterStack extends cdk.Stack {
             }
         });
 
-
         const uiLambdaFunction = new LambdaFunction(this, uiLambdaName, {
             functionName: uiLambdaName,
             code: Code.fromAsset(path.join(__dirname, '../src/lambda')),
@@ -241,41 +240,40 @@ export class CdkTwitterStack extends cdk.Stack {
         const item = items.addResource('{item}');
         item.addMethod('GET');
 
-        const queryMediaTask = new sfn.Task(this, 'queryMediaTask', {
-            task: new tasks.InvokeFunction(queryMediaFunction)
+        const queryMediaTask = new Task(this, 'queryMediaTask', {
+            task: new InvokeFunction(queryMediaFunction)
         });
 
-        const replyWithMediaTask = new sfn.Task(this, 'replyWithMediaTask', {
-            task: new tasks.InvokeFunction(replyWithMediaFunction)
+        const replyWithMediaTask = new Task(this, 'replyWithMediaTask', {
+            task: new InvokeFunction(replyWithMediaFunction)
         });
 
-        const replyNoMediaTask = new sfn.Task(this, 'replyNoMediaTask', {
-            task: new tasks.InvokeFunction(replyNoMediaFunction)
+        const replyNoMediaTask = new Task(this, 'replyNoMediaTask', {
+            task: new InvokeFunction(replyNoMediaFunction)
         });
 
-        const dynamoQueryTask = new sfn.Task(this, 'dynamoQueryTask', {
-            task: new tasks.InvokeFunction(dynamoQueryFunction)
+        const dynamoQueryTask = new Task(this, 'dynamoQueryTask', {
+            task: new InvokeFunction(dynamoQueryFunction)
         });
 
-        const dynamoPutTask = new sfn.Task(this, 'dynamoPutTask', {
-            task: new tasks.InvokeFunction(dynamoPutFunction)
+        const dynamoPutTask = new Task(this, 'dynamoPutTask', {
+            task: new InvokeFunction(dynamoPutFunction)
         });
 
-        const dynamoUpdateTask = new sfn.Task(this, 'dynamoUpdateTask', {
-            task: new tasks.InvokeFunction(dynamoUpdateFunction)
+        const dynamoUpdateTask = new Task(this, 'dynamoUpdateTask', {
+            task: new InvokeFunction(dynamoUpdateFunction)
         });
 
         const definition = queryMediaTask
-            .next(new sfn.Choice(this, 'Tweet Has Media?')
-                .when(sfn.Condition.numberEquals('$.has_media', 1), replyWithMediaTask
+            .next(new Choice(this, 'Tweet Has Media?')
+                .when(Condition.numberEquals('$.has_media', 1), replyWithMediaTask
                 .next(dynamoQueryTask)
-                .next(new sfn.Choice(this, 'User Exists in Dynamo?')
-                    .when(sfn.Condition.numberEquals('$.user_exists', 1), dynamoUpdateTask)
+                .next(new Choice(this, 'User Exists in Dynamo?')
+                    .when(Condition.numberEquals('$.user_exists', 1), dynamoUpdateTask)
                     .otherwise(dynamoPutTask)))
                 .otherwise(replyNoMediaTask))
-                // .afterwards())
 
-        const SfnStateMachine = new sfn.StateMachine(this, 'TwitterStateMachine', {
+        const SfnStateMachine = new StateMachine(this, 'TwitterStateMachine', {
             definition,
             timeout: cdk.Duration.minutes(5)
         });
