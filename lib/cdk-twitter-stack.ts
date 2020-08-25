@@ -12,6 +12,7 @@ import * as sfn from '@aws-cdk/aws-stepfunctions';
 import * as tasks from '@aws-cdk/aws-stepfunctions-tasks';
 
 import path = require('path');
+import { Choice } from '@aws-cdk/aws-stepfunctions';
 
 export class CdkTwitterStack extends cdk.Stack {
     constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
@@ -264,10 +265,15 @@ export class CdkTwitterStack extends cdk.Stack {
             task: new tasks.InvokeFunction(dynamoUpdateFunction)
         });
 
-        const definition = sfn.Chain.start(queryMediaTask)
-            .next(replyWithMediaTask)
-            .next(dynamoQueryTask)
-            .next(dynamoUpdateTask)
+        const definition = queryMediaTask
+            .next(new sfn.Choice(this, 'Tweet Has Media?')
+                .when(sfn.Condition.numberEquals('$.has_media', 1), replyWithMediaTask
+                .next(dynamoQueryTask)
+                .next(new sfn.Choice(this, 'User Exists in Dynamo?')
+                    .when(sfn.Condition.numberEquals('$.user_exists', 1), dynamoUpdateTask)
+                    .otherwise(dynamoPutTask)))
+                .otherwise(replyNoMediaTask))
+                // .afterwards())
 
         const SfnStateMachine = new sfn.StateMachine(this, 'TwitterStateMachine', {
             definition,

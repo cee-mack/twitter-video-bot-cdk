@@ -20,15 +20,20 @@ def handler(event: dict, context):
     tweet_id = event["tweet_id"]
     parent_tweet_id = event["parent_tweet_id"]
     user_screen_name = event["user_screen_name"]
+    has_media = 0
 
     parent_tweet_data = api.get_status(parent_tweet_id, tweet_mode='extended')
 
     video_link = return_highest_bitrate(parent_tweet_data._json)
 
+    if video_link:
+        has_media = 1
+
     payload = {
         "tweet_id": tweet_id,
         "user_screen_name": user_screen_name,
-        "video_link": video_link
+        "video_link": video_link,
+        "has_media": has_media
     }
 
     return payload
