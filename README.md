@@ -5,7 +5,7 @@ The bot runs via AWS step functions, and is deployed via CDK.
 The Twitter Username of the requestor and video url are stored in DynamoDB with a configurable expiration date.
 An API gateway endpoint is created to allow queries against the DynamoDB table. The endpoint url is returned once the stack is created. Make a GET request to:
 
-https://<endpoint-url>/prod/items/<twitter-username>
+https://{endpoint-url}/prod/items/{twitter-username}
 
 Flow of the step function lambdas:
 
