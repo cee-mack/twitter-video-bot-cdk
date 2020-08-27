@@ -28,7 +28,6 @@ export class CdkTwitterStack extends cdk.Stack {
         const replyWithMediaLambdaName = 'reply-with-media-lambda';
         const uiLambdaName = 'ui-lambda';
         const dynamoTableName = 'cdk-twitter-dynamo';
-        const apiName = 'TwitterAppApi';
         const pythonPath = '/var/task/dependencies:/var/runtime';
         const stateMachineName = 'TwitterStateMachine';
 
@@ -84,7 +83,7 @@ export class CdkTwitterStack extends cdk.Stack {
         twitterLambdaRole.addToPolicy(new PolicyStatement({
             resources: [`arn:aws:states:${region}:${accountId}:stateMachine:${stateMachineName}*`],
             actions: [
-                '*']
+                'states:StartExecution']
         }));
 
         dynamoLambdaRole.addToPolicy(new PolicyStatement({
