@@ -9,7 +9,7 @@ https://<endpoint-url>/prod/items/<twitter-username>
 
 Flow of the step function lambdas:
 
-![step function flow](https://github.com/CrgMkz/twitter-video-bot-cdk/steo_function_flow.png?raw=true)
+![step function flow](https://github.com/CrgMkz/twitter-video-bot-cdk/blob/master/step_function_flow.png?raw=true)
 
 #### Prerequisites:
 You will need a Twitter Developer account. Apply here:
