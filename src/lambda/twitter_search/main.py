@@ -31,7 +31,10 @@ def handler(event: dict, context):
     main_account_tweets = api.get_user(twitter_account_name)
     latest_id = main_account_tweets._json['status']['id'] - 1
 
-    search = api.search(search_string, tweet_mode='extended', since_id=latest_id)
+    search = api.search(
+        search_string,
+        tweet_mode='extended',
+        since_id=latest_id)
 
     if search:
         for result in search:
@@ -42,8 +45,8 @@ def handler(event: dict, context):
             }
             try:
                 logger.info(f"Executing Step Function", {
-                "tweet_id": payload["tweet_id"]
-            })
+                    "tweet_id": payload["tweet_id"]
+                })
                 client.start_execution(
                     stateMachineArn=state_machine_arn,
                     name=f"execution-{timestamp}-{payload['tweet_id']}",
