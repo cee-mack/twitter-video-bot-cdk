@@ -21,16 +21,15 @@ def handler(event: dict, context):
     video_link = event["video_link"]
     expiration_date = int(time.time()) + (int(expiration_days) * 86400)
 
-
     put_id = table.put_item(
         Item={
             'username': user_screen_name,
             'expiry': expiration_date,
             'tweet': [
                 {'id': tweet_id,
-                'url': video_link,
-                'created': int(time.time())
-                }
+                 'url': video_link,
+                 'created': int(time.time())
+                 }
             ]
         }
     )

@@ -38,6 +38,7 @@ def handler(event: dict, context):
 
     return payload
 
+
 def return_highest_bitrate(parent_tweet_data: tweepy.models.Status):
     """
     'media_links' is an array of dicts. The 'max' function
@@ -47,7 +48,8 @@ def return_highest_bitrate(parent_tweet_data: tweepy.models.Status):
     """
     try:
         media_links: list = parent_tweet_data['extended_entities']['media'][0]['video_info']['variants']
-        return max(media_links, key=lambda n:n.get("bitrate", 0) if n.get('content_type') == 'video/mp4' else False)['url']
+        return max(media_links, key=lambda n: n.get("bitrate", 0)
+                   if n.get('content_type') == 'video/mp4' else False)['url']
 
     except KeyError:
         return None
