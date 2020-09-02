@@ -35,7 +35,7 @@ def handler(event: dict, context):
             },
             UpdateExpression='REMOVE tweet[0]',
             ReturnValues="UPDATED_NEW"
-            )
+        )
 
     update = table.update_item(
         Key={
